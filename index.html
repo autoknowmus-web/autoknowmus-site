@@ -8,27 +8,41 @@
 
   <h1>🚗 AutoKnowmus Price Checker</h1>
 
+  <!-- Brand -->
   <select id="brand">
     <option value="">Select Brand</option>
   </select>
 
+  <!-- Model -->
   <select id="model">
     <option value="">Select Model</option>
   </select>
 
+  <!-- Year -->
   <select id="year">
     <option value="">Select Year</option>
-    <script>
-      for(let y=2025; y>=2010; y--){
-        document.write(`<option value="${y}">${y}</option>`);
-      }
-    </script>
   </select>
 
+  <!-- Fuel -->
   <select id="fuel">
     <option value="">Select Fuel</option>
     <option>Petrol</option>
     <option>Diesel</option>
+  </select>
+
+  <!-- NEW: Owner -->
+  <select id="owner">
+    <option value="">Owner</option>
+    <option>1st</option>
+    <option>2nd</option>
+    <option>3rd+</option>
+  </select>
+
+  <!-- NEW: City -->
+  <select id="city">
+    <option value="">City</option>
+    <option>Metro</option>
+    <option>Non-Metro</option>
   </select>
 
   <br><br>
@@ -38,7 +52,7 @@
 
 <script>
 
-// DATA
+// ---------------- DATA ----------------
 const carData = {
   Toyota: {
     Corolla: 1200000,
@@ -54,10 +68,11 @@ const carData = {
   }
 };
 
-// Populate brands
+// ---------------- INIT ----------------
 const brandSelect = document.getElementById("brand");
 const modelSelect = document.getElementById("model");
 
+// Populate brands
 Object.keys(carData).forEach(brand => {
   let option = document.createElement("option");
   option.value = brand;
@@ -65,9 +80,18 @@ Object.keys(carData).forEach(brand => {
   brandSelect.add(option);
 });
 
-// Update models
+// Populate years
+const yearSelect = document.getElementById("year");
+for (let y = new Date().getFullYear(); y >= 2010; y--) {
+  let option = document.createElement("option");
+  option.value = y;
+  option.text = y;
+  yearSelect.add(option);
+}
+
+// Update models when brand changes
 brandSelect.addEventListener("change", () => {
-  modelSelect.innerHTML = '<option>Select Model</option>';
+  modelSelect.innerHTML = '<option value="">Select Model</option>';
   const models = carData[brandSelect.value];
 
   Object.keys(models).forEach(model => {
@@ -78,36 +102,59 @@ brandSelect.addEventListener("change", () => {
   });
 });
 
-// PRICE LOGIC
+// ---------------- PRICE LOGIC ----------------
 function getPrice() {
+
   const brand = brandSelect.value;
   const model = modelSelect.value;
   const year = document.getElementById("year").value;
   const fuel = document.getElementById("fuel").value;
+  const owner = document.getElementById("owner").value;
+  const city = document.getElementById("city").value;
 
-  if (!brand || !model || !year || !fuel) {
+  if (!brand || !model || !year || !fuel || !owner || !city) {
     alert("Please select all fields");
     return;
   }
 
   let basePrice = carData[brand][model];
 
+  // Depreciation
   const currentYear = new Date().getFullYear();
   const age = currentYear - year;
   let depreciation = Math.pow(0.9, age);
 
+  // Demand factor
   let demandFactor = {
     Toyota: 1.1,
     Honda: 1.05,
     Maruti: 1.0
   }[brand];
 
+  // Fuel factor
   let fuelFactor = {
     Petrol: 1.0,
     Diesel: 1.05
   }[fuel];
 
-  let price = basePrice * depreciation * demandFactor * fuelFactor;
+  // Owner factor
+  let ownerFactor = {
+    "1st": 1.0,
+    "2nd": 0.95,
+    "3rd+": 0.90
+  }[owner];
+
+  // City factor
+  let cityFactor = {
+    "Metro": 1.05,
+    "Non-Metro": 0.98
+  }[city];
+
+  // Mileage (temporary fixed)
+  let mileageFactor = 0.95;
+
+  // FINAL PRICE
+  let price = basePrice * depreciation * demandFactor * fuelFactor * ownerFactor * cityFactor * mileageFactor;
 
   document.getElementById("result").innerText =
     "Estimated Price: ₹ " + Math.round(price).toLocaleString();
