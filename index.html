@@ -117,7 +117,7 @@ function getPrice() {
     "Estimated Price: ₹ " + Math.round(price).toLocaleString();
 
   // 🔥 SEND TO GOOGLE SHEET
-  fetch("https://script.google.com/macros/s/AKfycby0VOUTc-d8-H83U9p3jt4zk-STcP69e3sNzJGy56iahmVbwPg3y5rKRWpXpIn42Gr4/exec", {
+  fetch("https://script.google.com/macros/s/AKfycbw8ZOr3Aodw7i3R0kkOaCtRuW0Loojw7RrZQbyqgO9SnTGXOTYqQpRmyNvhtkzYC7UDKQ/exec", {
     method: "POST",
     body: JSON.stringify({
       brand: brand,
