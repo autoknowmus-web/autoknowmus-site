@@ -4,84 +4,77 @@
   <title>AutoKnowmus Price Checker</title>
 </head>
 
-<body style="font-family: Arial; text-align:center; margin-top:50px;">
+<body style="font-family: Arial; text-align: center; margin-top: 50px;">
 
-  <h1>🚗 AutoKnowmus Price Checker</h1>
+<h1>🚗 AutoKnowmus Price Checker</h1>
 
-  <!-- DROPDOWNS -->
-  <select id="brand">
-    <option>Select Brand</option>
-    <option value="Maruti">Maruti</option>
-    <option value="Honda">Honda</option>
-    <option value="Toyota">Toyota</option>
-  </select>
+<!-- DROPDOWNS -->
+<select id="brand"></select>
+<select id="model"></select>
 
-  <select id="model">
-    <option>Select Model</option>
-  </select>
+<select id="year">
+  <option value="">Year</option>
+  <script>
+    for (let y = 2024; y >= 2005; y--) {
+      document.write(`<option value="${y}">${y}</option>`);
+    }
+  </script>
+</select>
 
-  <select id="year">
-    <option value="2023">2023</option>
-    <option value="2022">2022</option>
-    <option value="2021">2021</option>
-    <option value="2020">2020</option>
-  </select>
+<select id="fuel">
+  <option value="">Fuel</option>
+  <option>Petrol</option>
+  <option>Diesel</option>
+</select>
 
-  <select id="fuel">
-    <option value="Petrol">Petrol</option>
-    <option value="Diesel">Diesel</option>
-  </select>
+<!-- NEW INPUT -->
+<br><br>
+<input type="number" id="km" placeholder="Enter KM driven">
 
-  <br><br>
+<br><br>
+<button onclick="getPrice()">Get Price</button>
 
-  <!-- NEW INPUT -->
-  <input id="km" type="number" placeholder="KM Driven" />
-
-  <br><br>
-
-  <button onclick="getPrice()">Get Price</button>
-
-  <h2 id="result"></h2>
+<h2 id="result"></h2>
 
 <script>
-
-// ================== DATA ==================
+// DATA
 const carData = {
-  Maruti: {
-    Swift: 600000,
-    Baleno: 700000
-  },
-  Honda: {
-    City: 1200000,
-    Amaze: 800000
-  },
-  Toyota: {
-    Corolla: 1500000,
-    Innova: 2000000
-  }
+  Toyota: { Corolla: 1200000, Camry: 2000000 },
+  Honda: { City: 800000, Civic: 1500000 },
+  Maruti: { Swift: 600000, Baleno: 700000 }
 };
 
-// ================== MODEL DROPDOWN ==================
+// ELEMENTS
 const brandSelect = document.getElementById("brand");
 const modelSelect = document.getElementById("model");
 
-brandSelect.addEventListener("change", () => {
-  modelSelect.innerHTML = '<option>Select Model</option>';
-  const models = carData[brandSelect.value];
-
-  for (let model in models) {
-    let option = document.createElement("option");
-    option.value = model;
-    option.text = model;
-    modelSelect.add(option);
-  }
+// POPULATE BRAND
+brandSelect.innerHTML = "<option value=''>Brand</option>";
+Object.keys(carData).forEach(brand => {
+  let opt = document.createElement("option");
+  opt.value = brand;
+  opt.text = brand;
+  brandSelect.add(opt);
 });
 
-// ================== PRICE FUNCTION ==================
+// UPDATE MODELS
+brandSelect.addEventListener("change", () => {
+  modelSelect.innerHTML = "<option value=''>Model</option>";
+  if (!brandSelect.value) return;
+
+  Object.keys(carData[brandSelect.value]).forEach(model => {
+    let opt = document.createElement("option");
+    opt.value = model;
+    opt.text = model;
+    modelSelect.add(opt);
+  });
+});
+
+// MAIN FUNCTION
 function getPrice() {
 
-  const brand = document.getElementById("brand").value;
-  const model = document.getElementById("model").value;
+  const brand = brandSelect.value;
+  const model = modelSelect.value;
   const year = document.getElementById("year").value;
   const fuel = document.getElementById("fuel").value;
   const km = document.getElementById("km").value;
@@ -93,36 +86,54 @@ function getPrice() {
 
   let basePrice = carData[brand][model];
 
-  // ================== DEPRECIATION ==================
+  // AGE DEPRECIATION
   const currentYear = new Date().getFullYear();
   const age = currentYear - year;
   let depreciation = Math.pow(0.90, age);
 
-  // ================== DEMAND ==================
-  let demandFactor = {
+  // DEMAND FACTOR
+  const demandFactor = {
     Toyota: 1.1,
     Honda: 1.05,
     Maruti: 1.0
   }[brand];
 
-  // ================== FUEL ==================
-  let fuelFactor = {
+  // FUEL FACTOR
+  const fuelFactor = {
     Petrol: 1.0,
     Diesel: 1.05
   }[fuel];
 
-  // ================== KM LOGIC (NEW SMART) ==================
+  // KM LOGIC
   let mileageFactor;
-
   if (km < 30000) mileageFactor = 1.05;
   else if (km < 70000) mileageFactor = 1.0;
   else mileageFactor = 0.90;
 
-  // ================== FINAL PRICE ==================
+  // FINAL PRICE
   let price = basePrice * depreciation * demandFactor * fuelFactor * mileageFactor;
 
   document.getElementById("result").innerText =
     "Estimated Price: ₹ " + Math.round(price).toLocaleString();
+
+  // 🔥 SEND TO GOOGLE SHEET
+  fetch("https://script.google.com/macros/s/AKfycbxE8ieNcnQnJEUaXNzacvhonxzQjKDP_i9MI4fczOwtnTSV3POFnfqvWpa3...", {
+    method: "POST",
+    body: JSON.stringify({
+      brand: brand,
+      model: model,
+      year: year,
+      fuel: fuel,
+      km: km,
+      price: price
+    }),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => res.text())
+  .then(data => console.log("Saved:", data))
+  .catch(err => console.error("Error:", err));
 }
 
 </script>
