@@ -2,141 +2,136 @@
 <html>
 <head>
   <title>AutoKnowmus Price Checker</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    select, input, button {
+      padding: 8px;
+      margin: 5px;
+      font-size: 16px;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
-<body style="font-family: Arial; text-align: center; margin-top: 50px;">
+<body>
 
-<h1>🚗 AutoKnowmus Price Checker</h1>
+  <h1>🚗 AutoKnowmus Price Checker</h1>
 
-<!-- DROPDOWNS -->
-<select id="brand"></select>
-<select id="model"></select>
+  <!-- DROPDOWNS -->
+  <div>
+    <select id="brand">
+      <option>Maruti</option>
+      <option>Hyundai</option>
+      <option>Honda</option>
+      <option>Toyota</option>
+    </select>
 
-<select id="year">
-  <option value="">Year</option>
+    <select id="model">
+      <option>Swift</option>
+      <option>i20</option>
+      <option>City</option>
+      <option>Corolla</option>
+    </select>
+
+    <select id="year">
+      <script>
+        for (let y = 2024; y >= 2005; y--) {
+          document.write(`<option>${y}</option>`);
+        }
+      </script>
+    </select>
+
+    <select id="fuel">
+      <option>Petrol</option>
+      <option>Diesel</option>
+      <option>CNG</option>
+    </select>
+  </div>
+
+  <!-- KM INPUT -->
+  <div>
+    <input type="number" id="km" placeholder="Enter KM driven" />
+  </div>
+
+  <!-- BUTTON -->
+  <div>
+    <button onclick="getPrice()">Get Price</button>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result"></div>
+
   <script>
-    for (let y = 2024; y >= 2005; y--) {
-      document.write(`<option value="${y}">${y}</option>`);
+    function getPrice() {
+
+      let brand = document.getElementById("brand").value;
+      let model = document.getElementById("model").value;
+      let year = document.getElementById("year").value;
+      let fuel = document.getElementById("fuel").value;
+      let km = document.getElementById("km").value;
+
+      if (!km) {
+        alert("Please enter KM");
+        return;
+      }
+
+      // BASE PRICE LOGIC
+      let basePrice = 500000;
+
+      let age = 2026 - year;
+      let depreciation = 1 - (age * 0.05);
+      if (depreciation < 0.3) depreciation = 0.3;
+
+      let demandFactor = {
+        "Maruti": 1.0,
+        "Hyundai": 0.95,
+        "Honda": 1.1,
+        "Toyota": 1.2
+      }[brand];
+
+      let fuelFactor = {
+        "Petrol": 1.0,
+        "Diesel": 1.1,
+        "CNG": 0.9
+      }[fuel];
+
+      let mileageFactor = 1 - (km / 200000);
+      if (mileageFactor < 0.5) mileageFactor = 0.5;
+
+      let price = basePrice * depreciation * demandFactor * fuelFactor * mileageFactor;
+
+      document.getElementById("result").innerText =
+        "Estimated Price: ₹ " + Math.round(price).toLocaleString();
+
+      // 🔥 SEND TO GOOGLE SHEET
+      fetch("https://script.google.com/macros/s/AKfycbzHp_13uXonAWQewxpCCtblG-FSBOEzapekJbKNc8fCeISgHM8cPQ57tyI5KMHZfg6JIg/exec", {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          brand: brand,
+          model: model,
+          year: year,
+          fuel: fuel,
+          km: km,
+          price: price
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
     }
   </script>
-</select>
-
-<select id="fuel">
-  <option value="">Fuel</option>
-  <option>Petrol</option>
-  <option>Diesel</option>
-</select>
-
-<!-- NEW INPUT -->
-<br><br>
-<input type="number" id="km" placeholder="Enter KM driven">
-
-<br><br>
-<button onclick="getPrice()">Get Price</button>
-
-<h2 id="result"></h2>
-
-<script>
-// DATA
-const carData = {
-  Toyota: { Corolla: 1200000, Camry: 2000000 },
-  Honda: { City: 800000, Civic: 1500000 },
-  Maruti: { Swift: 600000, Baleno: 700000 }
-};
-
-// ELEMENTS
-const brandSelect = document.getElementById("brand");
-const modelSelect = document.getElementById("model");
-
-// POPULATE BRAND
-brandSelect.innerHTML = "<option value=''>Brand</option>";
-Object.keys(carData).forEach(brand => {
-  let opt = document.createElement("option");
-  opt.value = brand;
-  opt.text = brand;
-  brandSelect.add(opt);
-});
-
-// UPDATE MODELS
-brandSelect.addEventListener("change", () => {
-  modelSelect.innerHTML = "<option value=''>Model</option>";
-  if (!brandSelect.value) return;
-
-  Object.keys(carData[brandSelect.value]).forEach(model => {
-    let opt = document.createElement("option");
-    opt.value = model;
-    opt.text = model;
-    modelSelect.add(opt);
-  });
-});
-
-// MAIN FUNCTION
-function getPrice() {
-
-  const brand = brandSelect.value;
-  const model = modelSelect.value;
-  const year = document.getElementById("year").value;
-  const fuel = document.getElementById("fuel").value;
-  const km = document.getElementById("km").value;
-
-  if (!brand || !model || !year || !fuel || !km) {
-    alert("Please fill all fields");
-    return;
-  }
-
-  let basePrice = carData[brand][model];
-
-  // AGE DEPRECIATION
-  const currentYear = new Date().getFullYear();
-  const age = currentYear - year;
-  let depreciation = Math.pow(0.90, age);
-
-  // DEMAND FACTOR
-  const demandFactor = {
-    Toyota: 1.1,
-    Honda: 1.05,
-    Maruti: 1.0
-  }[brand];
-
-  // FUEL FACTOR
-  const fuelFactor = {
-    Petrol: 1.0,
-    Diesel: 1.05
-  }[fuel];
-
-  // KM LOGIC
-  let mileageFactor;
-  if (km < 30000) mileageFactor = 1.05;
-  else if (km < 70000) mileageFactor = 1.0;
-  else mileageFactor = 0.90;
-
-  // FINAL PRICE
-  let price = basePrice * depreciation * demandFactor * fuelFactor * mileageFactor;
-
-  document.getElementById("result").innerText =
-    "Estimated Price: ₹ " + Math.round(price).toLocaleString();
-
-  // 🔥 SEND TO GOOGLE SHEET
-  fetch("https://script.google.com/macros/s/AKfycbzHp_13uXonAWQewxpCCtblG-FSBOEzapekJbKNc8fCeISgHM8cPQ57tyI5KMHZfg6JIg/exec", {
-    method: "POST",
-    body: JSON.stringify({
-      brand: brand,
-      model: model,
-      year: year,
-      fuel: fuel,
-      km: km,
-      price: price
-    }),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-  .then(res => res.text())
-  .then(data => console.log("Saved:", data))
-  .catch(err => console.error("Error:", err));
-}
-
-</script>
 
 </body>
 </html>
