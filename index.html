@@ -1,88 +1,78 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>AutoKnowmus - Used Car Price Checker</title>
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      padding: 40px;
-      background: #f5f5f5;
-    }
-    h1 {
-      font-size: 40px;
-    }
-    select, button {
-      padding: 10px;
-      margin: 10px;
-      font-size: 16px;
-    }
-    #result {
-      margin-top: 20px;
-      font-size: 24px;
-      font-weight: bold;
-      color: green;
-    }
-  </style>
-</head>
-
-<body>
-
-<h1>🚗 AutoKnowmus Price Checker</h1>
-
-<select id="brand">
-  <option value="">Select Brand</option>
-  <option value="Toyota">Toyota</option>
-  <option value="Honda">Honda</option>
-</select>
-
-<select id="model">
-  <option value="">Select Model</option>
-  <option value="Corolla">Corolla</option>
-  <option value="Civic">Civic</option>
-</select>
-
-<select id="year">
-  <option value="">Select Year</option>
-  <option value="2020">2020</option>
-  <option value="2021">2021</option>
-</select>
-
-<select id="fuel">
-  <option value="">Select Fuel</option>
-  <option value="Petrol">Petrol</option>
-  <option value="Diesel">Diesel</option>
-</select>
-
-<br>
-
-<button onclick="getPrice()">Get Price</button>
-
-<div id="result"></div>
-
 <script>
+const carData = {
+  Toyota: {
+    Corolla: 1200000,
+    Camry: 3000000
+  },
+  Honda: {
+    City: 1400000,
+    Civic: 2200000
+  },
+  Maruti: {
+    Swift: 800000,
+    Baleno: 900000
+  }
+};
+
+// Populate brand dropdown
+const brandSelect = document.getElementById("brand");
+const modelSelect = document.getElementById("model");
+
+Object.keys(carData).forEach(brand => {
+  let option = document.createElement("option");
+  option.value = brand;
+  option.text = brand;
+  brandSelect.add(option);
+});
+
+// Update models when brand changes
+brandSelect.addEventListener("change", () => {
+  modelSelect.innerHTML = '<option>Select Model</option>';
+  const models = carData[brandSelect.value];
+
+  Object.keys(models).forEach(model => {
+    let option = document.createElement("option");
+    option.value = model;
+    option.text = model;
+    modelSelect.add(option);
+  });
+});
+
+// Price calculation
 function getPrice() {
-  let brand = document.getElementById("brand").value;
-  let model = document.getElementById("model").value;
-  let year = document.getElementById("year").value;
-  let fuel = document.getElementById("fuel").value;
+  const brand = brandSelect.value;
+  const model = modelSelect.value;
+  const year = document.getElementById("year").value;
+  const fuel = document.getElementById("fuel").value;
 
   if (!brand || !model || !year || !fuel) {
     alert("Please select all fields");
     return;
   }
 
-  let price = 500000;
+  let basePrice = carData[brand][model];
 
-  if (brand === "Toyota") price += 100000;
-  if (model === "Civic") price += 50000;
-  if (year === "2021") price += 30000;
-  if (fuel === "Diesel") price += 20000;
+  // Depreciation (10% per year)
+  const currentYear = new Date().getFullYear();
+  const age = currentYear - year;
+  let depreciation = Math.pow(0.90, age);
+
+  // Demand factor
+  let demandFactor = {
+    Toyota: 1.1,
+    Honda: 1.05,
+    Maruti: 1.0
+  }[brand];
+
+  // Fuel factor
+  let fuelFactor = {
+    Petrol: 1.0,
+    Diesel: 1.05
+  }[fuel];
+
+  let price = basePrice * depreciation * demandFactor * fuelFactor;
 
   document.getElementById("result").innerText =
-    "Estimated Price: ₹ " + price.toLocaleString();
+    "Estimated Price: ₹ " + Math.round(price).toLocaleString();
 }
 </script>
-
-</body>
-</html>
