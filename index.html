@@ -1,8 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AutoKnowmus Price Checker</title>
+</head>
+
+<body style="text-align:center; font-family:sans-serif;">
+
+  <h1>🚗 AutoKnowmus Price Checker</h1>
+
+  <select id="brand">
+    <option value="">Select Brand</option>
+  </select>
+
+  <select id="model">
+    <option value="">Select Model</option>
+  </select>
+
+  <select id="year">
+    <option value="">Select Year</option>
+    <script>
+      for(let y=2025; y>=2010; y--){
+        document.write(`<option value="${y}">${y}</option>`);
+      }
+    </script>
+  </select>
+
+  <select id="fuel">
+    <option value="">Select Fuel</option>
+    <option>Petrol</option>
+    <option>Diesel</option>
+  </select>
+
+  <br><br>
+  <button onclick="getPrice()">Get Price</button>
+
+  <h2 id="result"></h2>
+
 <script>
+
+// DATA
 const carData = {
   Toyota: {
     Corolla: 1200000,
-    Camry: 3000000
+    Camry: 2000000
   },
   Honda: {
     City: 1400000,
@@ -14,7 +54,7 @@ const carData = {
   }
 };
 
-// Populate brand dropdown
+// Populate brands
 const brandSelect = document.getElementById("brand");
 const modelSelect = document.getElementById("model");
 
@@ -25,7 +65,7 @@ Object.keys(carData).forEach(brand => {
   brandSelect.add(option);
 });
 
-// Update models when brand changes
+// Update models
 brandSelect.addEventListener("change", () => {
   modelSelect.innerHTML = '<option>Select Model</option>';
   const models = carData[brandSelect.value];
@@ -38,7 +78,7 @@ brandSelect.addEventListener("change", () => {
   });
 });
 
-// Price calculation
+// PRICE LOGIC
 function getPrice() {
   const brand = brandSelect.value;
   const model = modelSelect.value;
@@ -52,19 +92,16 @@ function getPrice() {
 
   let basePrice = carData[brand][model];
 
-  // Depreciation (10% per year)
   const currentYear = new Date().getFullYear();
   const age = currentYear - year;
-  let depreciation = Math.pow(0.90, age);
+  let depreciation = Math.pow(0.9, age);
 
-  // Demand factor
   let demandFactor = {
     Toyota: 1.1,
     Honda: 1.05,
     Maruti: 1.0
   }[brand];
 
-  // Fuel factor
   let fuelFactor = {
     Petrol: 1.0,
     Diesel: 1.05
@@ -75,4 +112,8 @@ function getPrice() {
   document.getElementById("result").innerText =
     "Estimated Price: ₹ " + Math.round(price).toLocaleString();
 }
+
 </script>
+
+</body>
+</html>
